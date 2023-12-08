@@ -1,18 +1,17 @@
 import { View, ToastAndroid, Image, TouchableOpacity } from "react-native";
-import React from "react";
-import { Button, Text, TextInput } from "react-native-paper";
+import React, { useState } from "react";
+import { Text, TextInput } from "react-native-paper";
 import fetchServices from "../services/fetchServices";
 import LogoImage from "../../../assets/logo1.png";
 
 export default function SignupForm({ navigation }) {
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [repassword, setRepassword] = React.useState("");
-  const [showPass, setShowPass] = React.useState(false);
-  const [showRePass, setShowRePass] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
-  const [isError, setIsError] = React.useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [repassword, setRepassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [showRePass, setShowRePass] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const showToast = (message = "Something went wrong") => {
     ToastAndroid.show(message, ToastAndroid.LONG);
@@ -22,19 +21,24 @@ export default function SignupForm({ navigation }) {
     try {
       setLoading(true);
 
-      if (name === "" || email === "" || password === "" || repassword === "") {
-        showToast("Please input required data");
-        setIsError(true);
-        return false;
+      // Form validation
+      if (!name.trim() || !email.trim() || !password.trim() || !repassword.trim()) {
+        showToast("Please input all required data");
+        return;
+      }
+
+      // Validate email format
+      if (!email.includes("@")) {
+        showToast("Please enter a valid email address");
+        return;
       }
 
       if (password !== repassword) {
         showToast("Passwords do not match");
-        setIsError(true);
-        return false;
+        return;
       }
 
-      const url = "http://192.168.10.58/api/v1/register";
+      const url = "http://192.168.1.2/api/v1/register";
       const data = {
         name,
         email,
@@ -44,14 +48,15 @@ export default function SignupForm({ navigation }) {
 
       const result = await fetchServices.postData(url, data);
 
-      if (result.message != null) {
-        showToast(result?.message);
-      } else {
+      if (result.message) {
+        showToast(result.message);
         navigation.navigate("Login");
+      } else {
+        showToast("Registration failed");
       }
     } catch (e) {
       console.debug(e.toString());
-      showToast(e.toString());
+      showToast("An error occurred during registration");
     } finally {
       setLoading(false);
     }
@@ -66,7 +71,7 @@ export default function SignupForm({ navigation }) {
       <Image source={LogoImage} style={styles.logo} resizeMode="contain" />
 
       <Text style={styles.title}>Create an Account!</Text>
-      <Text style={styles.subtitle}>Enter your details to get started!</Text> 
+      <Text style={styles.subtitle}>Enter your details to get started!</Text>
 
       <TextInput
         mode="outlined"
@@ -74,7 +79,7 @@ export default function SignupForm({ navigation }) {
         style={styles.input}
         value={name}
         onChangeText={setName}
-        error={isError}
+        error={name.trim() === "" && loading === false}
       />
       <TextInput
         mode="outlined"
@@ -82,7 +87,7 @@ export default function SignupForm({ navigation }) {
         style={styles.input}
         value={email}
         onChangeText={setEmail}
-        error={isError}
+        error={!email.includes("@") && loading === false}
       />
       <TextInput
         mode="outlined"
@@ -97,7 +102,7 @@ export default function SignupForm({ navigation }) {
         style={styles.input}
         value={password}
         onChangeText={setPassword}
-        error={isError}
+        error={password.trim() === "" && loading === false}
       />
       <TextInput
         mode="outlined"
@@ -112,7 +117,7 @@ export default function SignupForm({ navigation }) {
         style={styles.input}
         value={repassword}
         onChangeText={setRepassword}
-        error={isError}
+        error={repassword.trim() === "" && loading === false}
       />
       <TouchableOpacity onPress={handleRegistration} style={styles.button}>
         <Text style={styles.buttonLabel}>Sign Up</Text>

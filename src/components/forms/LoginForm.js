@@ -1,16 +1,15 @@
-// LoginForm.js
 import { View, StyleSheet, ToastAndroid, Image, TouchableOpacity } from "react-native";
-import React from "react";
-import { Button, Text, TextInput, Checkbox, IconButton } from "react-native-paper";
+import React, { useState } from "react";
+import { Button, Text, TextInput, Checkbox } from "react-native-paper";
 import fetchServices from "../services/fetchServices";
 import LogoImage from "../../../assets/logo1.png";
 
 export default function LoginForm({ navigation }) {
-  const [showPass, setShowPass] = React.useState(false);
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [rememberMe, setRememberMe] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const showToast = (message = "Something went wrong") => {
     ToastAndroid.show(message, ToastAndroid.LONG);
@@ -20,31 +19,34 @@ export default function LoginForm({ navigation }) {
     try {
       setLoading(true);
 
-      // Basic validation
-      if (!email.trim()) {
-        showToast("Please enter your email");
+      if (!email.trim() || !password.trim()) {
+        showToast("Please enter both email and password");
         return;
       }
 
-      if (!password.trim()) {
-        showToast("Please enter your password");
+      // Validate email format
+      if (!email.includes("@")) {
+        showToast("Please enter a valid email address");
         return;
       }
 
-      const url = "http://192.168.10.58/api/v1/login";
+      const url = "http://192.168.1.2/api/v1/login";
       const data = {
         email,
         password,
       };
+
       const result = await fetchServices.postData(url, data);
-      console.debug(result);
-      if (result.message != null) {
-        showToast(result?.message);
-      } else {
+
+      if (result.token) {
+        showToast("Login successful");
         navigation.navigate("Home");
+      } else {
+        showToast("Invalid credentials");
       }
     } catch (e) {
       console.debug(e.toString());
+      showToast("An error occurred during login");
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ export default function LoginForm({ navigation }) {
         onChangeText={setEmail}
         keyboardType="email-address"
         selectionColor="#007bff"
-        theme={{ colors: { primary: "#007bff" } }} 
+        theme={{ colors: { primary: "#007bff" } }}
       />
 
       <TextInput
@@ -82,7 +84,7 @@ export default function LoginForm({ navigation }) {
           />
         }
         selectionColor="#007bff"
-        theme={{ colors: { primary: "#007bff" } }} 
+        theme={{ colors: { primary: "#007bff" } }}
       />
 
       <View style={styles.checkboxContainer}>
